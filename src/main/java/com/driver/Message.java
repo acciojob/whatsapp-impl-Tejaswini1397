@@ -8,6 +8,7 @@ public class Message {
     private Date timestamp;
 
 
+
     public int getId() {
         return id;
     }
