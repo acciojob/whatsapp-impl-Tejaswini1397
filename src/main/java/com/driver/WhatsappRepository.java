@@ -66,6 +66,7 @@ public class WhatsappRepository {
 
     public int createMessage(String content) {
         messageId++;
+        Message message=new Message(messageId,content);
         return messageId;
     }
 
@@ -145,28 +146,29 @@ public class WhatsappRepository {
     }
 
     public String findMessage(Date start, Date end, int k) throws Exception {
-        List<Message> messagesInRange = new ArrayList<>();
-
-        for (List<Message> messageList : groupMessageMap.values()) {
-            for (Message message : messageList) {
-                if (isWithinRange(message.getTimestamp(), start, end)) {
-                    messagesInRange.add(message);
-                }
+        List<Message> messageses = new ArrayList<>();
+        for(Group group:groupMessageMap.keySet()){
+            if(messageses.addAll(groupMessageMap.get(group)));
+        }
+        List<Message>filterMessages=new ArrayList<>();
+        for(Message message:messageses){
+            if(message.getTimestamp().after(start) && message.getTimestamp().before(end)){
+                filterMessages.add(message);
             }
         }
 
-        if (messagesInRange.size() < k) {
-            throw new Exception("Insufficient messages in the given time range");
+        if (filterMessages.size() < k) {
+            throw new Exception("K is greater than the number of messages");
         }
-
         // Sort the messages in descending order of timestamp
-        Collections.sort(messagesInRange, Comparator.comparing(Message::getTimestamp).reversed());
+        Collections.sort(filterMessages, new Comparator<Message>() {
+                    @Override
+                    public int compare(Message o1, Message o2) {
+                        return o2.getTimestamp().compareTo(o1.getTimestamp());
+                    }
+                });
 
-        // Get the kth latest message content
-        String messageContent = messagesInRange.get(k - 1).getContent();
-        return messageContent;
+        return filterMessages.get(k-1).getContent();
     }
-    private boolean isWithinRange(Date date, Date start, Date end) {
-        return date.after(start) && date.before(end);
-    }
+
 }
