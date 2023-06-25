@@ -46,21 +46,22 @@ public class WhatsappRepository {
 
         //For example: Consider userList1 = {Alex, Bob, Charlie}, userList2 = {Dan, Evan}, userList3 = {Felix, Graham, Hugh}.
         //If createGroup is called for these userLists in the same order, their group names would be "Group 1", "Evan", and "Group 2" respectively.
-        if(users.size()<2){
-            throw new IllegalArgumentException("At least 2 users required");
-        }
-        User admin=users.get(0);
-        List<User>member=new ArrayList<>(users.subList(1,users.size()));
+
+
         String groupName="";
         if(users.size()==2){
-            groupName=member.get(0).getName();
-        }else{
-            customGroupCount++;
-            groupName="Group"+customGroupCount;
+            Group group=new Group(users.get(1).getName(),2);
+            adminMap.put(group,users.get(0));
+            groupUserMap.put(group,users);
+            groupMessageMap.put(group,new ArrayList<Message>());
+            return group;
+
         }
-        Group group=new Group(groupName,member.size());
-        groupUserMap.put(group,member);
-        adminMap.put(group,admin);
+            this.customGroupCount++;
+        Group group=new Group(new String("Group"+this.customGroupCount),users.size());
+        adminMap.put(group,users.get(0));
+        groupUserMap.put(group,users);
+        groupMessageMap.put(group,new ArrayList<Message>());
         return group;
     }
 
