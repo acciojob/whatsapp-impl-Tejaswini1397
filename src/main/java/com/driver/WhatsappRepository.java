@@ -112,31 +112,80 @@ public class WhatsappRepository {
     }
 
     public int removeUser(User user) throws Exception {
-        Group group = findGroupByUser(user);
-
-        if (group == null) {
-            throw new Exception("User not found");
+//        Group group = findGroupByUser(user);
+//
+//        if (group == null) {
+//            throw new Exception("User not found");
+//        }
+//        String admin= String.valueOf(adminMap.get(user));
+//        if (admin.equals(user)) {
+//            throw new Exception("Cannot remove admin");
+//        }
+//
+//        List<User> members = groupUserMap.get(group);
+//        members.remove(user);
+//        groupUserMap.put(group, members);
+//
+//        // Remove user's messages from groupMessageMap
+//        List<Message> messages = groupMessageMap.getOrDefault(group, new ArrayList<>());
+//        messages.removeIf(message -> senderMap.get(message).equals(user));
+//        groupMessageMap.put(group, messages);
+//
+//        // Update relevant attributes
+//        int updatedNumUsersInGroup = members.size();
+//        int updatedNumMessagesInGroup = messages.size();
+//        int updatedNumOverallMessages = senderMap.size();
+//        return updatedNumUsersInGroup + updatedNumMessagesInGroup + updatedNumOverallMessages;
+        boolean userFound=false;
+        Group userGroup=null;
+        for(Group group:groupUserMap.keySet()) {
+            List<User> participants = groupUserMap.get(group);
+            for (User participant : participants) {
+                if (participant.equals(user)) {
+                    if (adminMap.get(group).equals(user)) {
+                        throw new Exception("Cannot remove admin");
+                    }
+                    userGroup = group;
+                    userFound = true;
+                    break;
+                }
+            }
+            if (userFound) {
+                break;
+            }
         }
-        String admin= String.valueOf(adminMap.get(user));
-        if (admin.equals(user)) {
-            throw new Exception("Cannot remove admin");
+        if(userFound) {
+            List<User> users = groupUserMap.get(userGroup);
+            List<User> updateUsers = new ArrayList<>();
+            for (User participant : users) {
+                if (participant.equals(user)) {
+                    continue;
+                }
+                updateUsers.add(participant);
+            }
+            groupUserMap.put(userGroup, updateUsers);
+
+            List<Message> messages = groupMessageMap.get(userGroup);
+            List<Message> updateMessages = new ArrayList<>();
+            for (Message message : messages) {
+                if (senderMap.get(message).equals(user))
+                    continue;
+                updateMessages.add(message);
+            }
+            groupMessageMap.put(userGroup, updateMessages);
+            HashMap<Message, User> updateSenderMap = new HashMap<>();
+            for (Message message : senderMap.keySet()) {
+                if (senderMap.get(message).equals(user))
+                    continue;
+                updateSenderMap.put(message, senderMap.get(message));
+            }
+            senderMap = updateSenderMap;
+            return updateUsers.size()+ updateMessages.size()+ updateSenderMap.size();
         }
+        throw new Exception("User Not Found");
 
-        List<User> members = groupUserMap.get(group);
-        members.remove(user);
-        groupUserMap.put(group, members);
-
-        // Remove user's messages from groupMessageMap
-        List<Message> messages = groupMessageMap.getOrDefault(group, new ArrayList<>());
-        messages.removeIf(message -> senderMap.get(message).equals(user));
-        groupMessageMap.put(group, messages);
-
-        // Update relevant attributes
-        int updatedNumUsersInGroup = members.size();
-        int updatedNumMessagesInGroup = messages.size();
-        int updatedNumOverallMessages = senderMap.size();
-        return updatedNumUsersInGroup + updatedNumMessagesInGroup + updatedNumOverallMessages;
     }
+
     private Group findGroupByUser(User user) {
         for (Map.Entry<Group, List<User>> entry : groupUserMap.entrySet()) {
             if (entry.getValue().contains(user)) {
