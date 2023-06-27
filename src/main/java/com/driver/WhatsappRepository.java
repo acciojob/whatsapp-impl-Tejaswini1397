@@ -75,18 +75,24 @@ public class WhatsappRepository {
         //Throw "Group does not exist" if the mentioned group does not exist
         //Throw "You are not allowed to send message" if the sender is not a member of the group
         //If the message is sent successfully, return the final number of messages in that group.
-        if(!groupUserMap.containsKey(group)){
-            throw new IllegalArgumentException("Group does not exist");
+        if(groupUserMap.containsKey(group)) {
+            List<User> users = groupUserMap.get(group);
+            boolean userFound = false;
+            for (User user : users) {
+                if(user.equals(sender)){
+                    userFound=true;
+                    break;
+            }
         }
-        List<User>member=groupUserMap.get(group);
-        if(!member.contains(sender)){
-            throw new IllegalArgumentException("You are not allowed to send message");
+            if (userFound){
+                senderMap.put(message,sender);
+                List<Message>messages=groupMessageMap.get(group);
+                messages.add(message);
+                return messages.size();
+            }
+        throw new IllegalArgumentException("You are not allowed to send message");
         }
-        senderMap.put(message,sender);
-        List<Message>messages=groupMessageMap.getOrDefault(group,new ArrayList<>());
-        messages.add(message);
-        groupMessageMap.put(group,messages);
-        return messages.size();
+        throw new IllegalArgumentException("Group Does not Exist");
     }
 
     public String changeAdmin(User approver, User user, Group group) throws Exception {
@@ -96,19 +102,25 @@ public class WhatsappRepository {
         //Change the admin of the group to "user" and return "SUCCESS".
         // Note that at one time there is only one admin and the admin rights are transferred
         // from approver to user.
-        if(!groupUserMap.containsKey(group)){
-            throw new Exception("Group does not exist");
-        }
-        User currAdmin=adminMap.get(group);
-        if(!currAdmin.equals(approver)){
+        if (groupUserMap.containsKey(group)) {
+            if (adminMap.get(group).equals(approver)) {
+                List<User> participants = groupUserMap.get(group);
+                boolean userFound = false;
+                for (User participant : participants) {
+                    if (participant.equals(user)) {
+                        userFound = true;
+                        break;
+                    }
+                }
+                if (userFound) {
+                    adminMap.put(group, user);
+                    return "SUCCESS";
+                }
+                throw new Exception("User is not a participant");
+            }
             throw new Exception("Approver does not have rights");
         }
-        List<User>member=groupUserMap.get(group);
-        if(!member.contains(user)){
-            throw new Exception("User is not a participant");
-        }
-        adminMap.put(group,user);
-        return "SUCCESS";
+        throw new Exception("Group does not exist");
     }
 
     public int removeUser(User user) throws Exception {
