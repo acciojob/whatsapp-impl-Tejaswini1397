@@ -29,12 +29,12 @@ public class WhatsappRepository {
     public String createUser(String name, String mobile) throws Exception {
         //If the mobile number exists in database, throw "User already exists" exception
         //Otherwise, create the user and return "SUCCESS"
-        if(userMobile.contains(mobile) ){
-             throw new Exception("User is already Exist");
+        if(!userMobile.contains(mobile) ) {
+            userMobile.add(mobile);
+            User user = new User(name, mobile);
+            return "SUCCESS";
         }
-        userMobile.add(mobile);
-        User user=new User(name,mobile);
-        return "SUCCESS";
+        throw new Exception("User is already Exist");
     }
 
     public Group createGroup(List<User> users)  {
