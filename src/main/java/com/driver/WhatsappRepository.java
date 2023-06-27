@@ -32,8 +32,8 @@ public class WhatsappRepository {
         if(userMobile.contains(mobile) ){
              throw new Exception("User is already Exist");
         }
-        User user=new User(name,mobile);
         userMobile.add(mobile);
+        User user=new User(name,mobile);
         return "SUCCESS";
     }
 
@@ -46,9 +46,6 @@ public class WhatsappRepository {
 
         //For example: Consider userList1 = {Alex, Bob, Charlie}, userList2 = {Dan, Evan}, userList3 = {Felix, Graham, Hugh}.
         //If createGroup is called for these userLists in the same order, their group names would be "Group 1", "Evan", and "Group 2" respectively.
-
-
-        String groupName="";
         if(users.size()==2){
             Group group=new Group(users.get(1).getName(),2);
             adminMap.put(group,users.get(0));
@@ -57,7 +54,7 @@ public class WhatsappRepository {
             return group;
 
         }
-            this.customGroupCount++;
+            this.customGroupCount+=1;
         Group group=new Group(new String("Group"+this.customGroupCount),users.size());
         adminMap.put(group,users.get(0));
         groupUserMap.put(group,users);
@@ -66,16 +63,16 @@ public class WhatsappRepository {
     }
 
     public int createMessage(String content) {
-        messageId++;
+        messageId+=1;
         Message message=new Message(messageId,content);
         return messageId;
     }
 
-    public int sendMessage(Message message, User sender, Group group) {
+    public int sendMessage(Message message, User sender, Group group)throws Exception {
         //Throw "Group does not exist" if the mentioned group does not exist
         //Throw "You are not allowed to send message" if the sender is not a member of the group
         //If the message is sent successfully, return the final number of messages in that group.
-        if(groupUserMap.containsKey(group)) {
+        if(adminMap.containsKey(group)) {
             List<User> users = groupUserMap.get(group);
             boolean userFound = false;
             for (User user : users) {
@@ -88,11 +85,12 @@ public class WhatsappRepository {
                 senderMap.put(message,sender);
                 List<Message>messages=groupMessageMap.get(group);
                 messages.add(message);
+                groupMessageMap.put(group,messages);
                 return messages.size();
             }
-        throw new IllegalArgumentException("You are not allowed to send message");
+        throw new Exception("You are not allowed to send message");
         }
-        throw new IllegalArgumentException("Group Does not Exist");
+        throw new Exception("Group Does not Exist");
     }
 
     public String changeAdmin(User approver, User user, Group group) throws Exception {
@@ -102,7 +100,7 @@ public class WhatsappRepository {
         //Change the admin of the group to "user" and return "SUCCESS".
         // Note that at one time there is only one admin and the admin rights are transferred
         // from approver to user.
-        if (groupUserMap.containsKey(group)) {
+        if (adminMap.containsKey(group)) {
             if (adminMap.get(group).equals(approver)) {
                 List<User> participants = groupUserMap.get(group);
                 boolean userFound = false;
@@ -198,19 +196,10 @@ public class WhatsappRepository {
 
     }
 
-    private Group findGroupByUser(User user) {
-        for (Map.Entry<Group, List<User>> entry : groupUserMap.entrySet()) {
-            if (entry.getValue().contains(user)) {
-                return entry.getKey();
-            }
-        }
-        return null;
-    }
-
     public String findMessage(Date start, Date end, int k) throws Exception {
         List<Message> messageses = new ArrayList<>();
         for(Group group:groupMessageMap.keySet()){
-            if(messageses.addAll(groupMessageMap.get(group)));
+            messageses.addAll(groupMessageMap.get(group));
         }
         List<Message>filterMessages=new ArrayList<>();
         for(Message message:messageses){
